@@ -1,0 +1,13 @@
+tensorflow
+Pillow
+numpy
+scipy
+matplotlib
+opencv-python
+fastapi
+uvicorn
+pyspellchecker
+python-docx
+pandas
+scikit-learn
+seaborn
