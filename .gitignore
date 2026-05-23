@@ -1,3 +1,4 @@
 # Ignore the data folder and its contents
 data/
 venv/
+logs/

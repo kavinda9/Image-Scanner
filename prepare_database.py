@@ -279,6 +279,12 @@ def main():
         log.error("No valid Kaggle images found after filtering.")
         return
 
+    # LIMIT: Use only first 200k samples to avoid memory issues
+    max_samples = 200000
+    if len(df_kaggle) > max_samples:
+        log.info(f"Limiting dataset to {max_samples} samples (from {len(df_kaggle)})")
+        df_kaggle = df_kaggle.head(max_samples)
+
     vocab = build_char_vocab(df_kaggle["word"].tolist())
 
     # Save splits using the merged DataFrame
