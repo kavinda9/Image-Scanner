@@ -163,10 +163,8 @@ def build_char_vocab(words: list[str]) -> dict:
 
 def save_kaggle_splits(df: pd.DataFrame, image_dir: Path, output_dir: Path, vocab: dict):
     """
-    Pre-process all Kaggle images, save as numpy arrays,
-    and write split CSVs + vocabulary JSON.
+    Process and save Kaggle splits in smaller batches to avoid memory errors.
     """
-    # ── Splits ────────────────────────────────────────────────────────────────
     train_df, tmp_df = train_test_split(df, test_size=VAL_RATIO + TEST_RATIO,
                                         random_state=RANDOM_SEED)
     val_df, test_df  = train_test_split(tmp_df, test_size=TEST_RATIO / (VAL_RATIO + TEST_RATIO),
@@ -176,26 +174,48 @@ def save_kaggle_splits(df: pd.DataFrame, image_dir: Path, output_dir: Path, voca
         split_dir = output_dir / "kaggle" / split_name
         split_dir.mkdir(parents=True, exist_ok=True)
 
-        images_list, labels_list, filenames_ok = [], [], []
+        labels_list, filenames_ok = [], []
+        batch_size = 5000  # Process 5000 images at a time
 
-        for _, row in tqdm(split_df.iterrows(), total=len(split_df),
-                           desc=f"Kaggle {split_name}"):
-            img_path = str(image_dir / row["filename"])
-            img = preprocess_kaggle_image(img_path)
-            if img is None:
-                continue
-            images_list.append(img)
-            labels_list.append(row["word"])
-            filenames_ok.append(row["filename"])
+        for batch_idx, (batch_start, batch_end) in enumerate([(i, min(i+batch_size, len(split_df)))
+                                                              for i in range(0, len(split_df), batch_size)]):
+            batch_df = split_df.iloc[batch_start:batch_end]
+            batch_images = []
 
-        images_arr = np.stack(images_list, axis=0)          # (N, H, W)
-        np.save(split_dir / "images.npy", images_arr)
+            for _, row in tqdm(batch_df.iterrows(), total=len(batch_df),
+                               desc=f"Kaggle {split_name} batch {batch_idx+1}"):
+                img_path = str(image_dir / row["filename"])
+                img = preprocess_kaggle_image(img_path)
+                if img is None:
+                    continue
+                batch_images.append(img)
+                labels_list.append(row["word"])
+                filenames_ok.append(row["filename"])
 
+            # Save batch immediately
+            if batch_images:
+                images_arr = np.stack(batch_images, axis=0)
+                np.save(split_dir / f"images_batch_{batch_idx}.npy", images_arr)
+                log.info(f"  Saved batch {batch_idx}: {len(images_arr)} samples")
+
+        # Merge all batches
+        batch_files = sorted(split_dir.glob("images_batch_*.npy"))
+        if batch_files:
+            all_images = [np.load(f) for f in batch_files]
+            final_images = np.concatenate(all_images, axis=0)
+            np.save(split_dir / "images.npy", final_images)
+
+            # Delete temp batch files
+            for f in batch_files:
+                f.unlink()
+
+            log.info(f"  Kaggle {split_name}: {len(final_images)} samples → {split_dir}")
+
+        # Save labels and filenames for the split
         out_df = pd.DataFrame({"filename": filenames_ok, "word": labels_list})
         out_df.to_csv(split_dir / "labels.csv", index=False)
-        log.info(f"  Kaggle {split_name}: {len(images_arr)} samples → {split_dir}")
 
-    # ── Save vocabulary ───────────────────────────────────────────────────────
+    # Save vocabulary
     vocab_path = output_dir / "kaggle" / "vocab.json"
     with open(vocab_path, "w") as f:
         json.dump(vocab, f, indent=2)
