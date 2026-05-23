@@ -98,12 +98,17 @@ def load_kaggle_csv(csv_path: str) -> pd.DataFrame:
     Adjust column names if your CSV differs.
     """
     df = pd.read_csv(csv_path)
-    # Normalise common column name variants
+    # Lowercase and strip column names
     df.columns = [c.strip().lower() for c in df.columns]
-    if "image" in df.columns and "filename" not in df.columns:
-        df.rename(columns={"image": "filename"}, inplace=True)
-    if "label" in df.columns and "word" not in df.columns:
-        df.rename(columns={"label": "word"}, inplace=True)
+    # v1: IMAGE, MEDICINE_NAME, GENERIC_NAME
+    # v2: FILENAME, IDENTITY
+    if "image" in df.columns and "medicine_name" in df.columns:
+        df.rename(columns={"image": "filename", "medicine_name": "word"}, inplace=True)
+    elif "filename" in df.columns and "identity" in df.columns:
+        df.rename(columns={"identity": "word"}, inplace=True)
+    elif "image" in df.columns and "label" in df.columns:
+        df.rename(columns={"image": "filename", "label": "word"}, inplace=True)
+    # Now require filename and word
     required = {"filename", "word"}
     missing = required - set(df.columns)
     if missing:
@@ -223,7 +228,6 @@ def main():
     if args.emnist_npz:
         images_e, labels_e = load_emnist_npz(args.emnist_npz)
     else:
-        # Try to find IDX binaries auto-detected from common filenames
         img_candidates = list(emnist_dir.glob("*images*"))
         lbl_candidates = list(emnist_dir.glob("*labels*"))
         if not img_candidates or not lbl_candidates:
@@ -234,16 +238,80 @@ def main():
             images_e = preprocess_emnist(images_e)
             save_emnist_splits(images_e, labels_e, output_dir)
 
-    # ── Kaggle ────────────────────────────────────────────────────────────────
-    log.info("=== Processing Kaggle prescriptions ===")
-    csv_path = kaggle_dir / args.kaggle_csv
-    if not csv_path.exists():
-        log.error(f"Kaggle CSV not found at {csv_path}. Check --kaggle_csv argument.")
-    else:
-        df_kaggle = load_kaggle_csv(str(csv_path))
-        vocab = build_char_vocab(df_kaggle["word"].tolist())
-        save_kaggle_splits(df_kaggle, kaggle_dir, output_dir, vocab)
+    # ── Kaggle: auto-detect and merge all v1/v2 CSVs and folders ─────────────
+    log.info("=== Processing Kaggle prescriptions (auto-detect v1/v2) ===")
+    kaggle_csvs = list(kaggle_dir.glob("written_name_*.csv"))
+    if not kaggle_csvs:
+        log.error(f"No Kaggle CSVs found in {kaggle_dir}")
+        return
 
+    all_dfs = []
+    for csv_file in kaggle_csvs:
+        df = load_kaggle_csv(str(csv_file))
+        # Determine image folder for this CSV
+        if "train" in csv_file.name:
+            img_folder = kaggle_dir / "train_v1" if "v1" in csv_file.name else kaggle_dir / "train_v2"
+            img_folder = img_folder / "train"
+        elif "validation" in csv_file.name:
+            img_folder = kaggle_dir / "validation_v1" if "v1" in csv_file.name else kaggle_dir / "validation_v2"
+            img_folder = img_folder / "validation"
+        elif "test" in csv_file.name:
+            img_folder = kaggle_dir / "test_v1" if "v1" in csv_file.name else kaggle_dir / "test_v2"
+            img_folder = img_folder / "test"
+        else:
+            log.warning(f"Unknown split for {csv_file.name}, skipping")
+            continue
+        df["img_folder"] = str(img_folder)
+        all_dfs.append(df)
+
+    # Merge all splits into one DataFrame
+    if not all_dfs:
+        log.error("No valid Kaggle CSVs found.")
+        return
+    df_kaggle = pd.concat(all_dfs, ignore_index=True)
+
+    # Fix filename to full path for each row
+    df_kaggle["full_path"] = df_kaggle.apply(lambda r: str(Path(r["img_folder"]) / r["filename"]), axis=1)
+
+    # Only keep rows where the image file exists
+    df_kaggle = df_kaggle[df_kaggle["full_path"].apply(lambda p: os.path.exists(p))]
+    if df_kaggle.empty:
+        log.error("No valid Kaggle images found after filtering.")
+        return
+
+    vocab = build_char_vocab(df_kaggle["word"].tolist())
+
+    # Save splits using the merged DataFrame
+    def save_kaggle_splits_merged(df, output_dir, vocab):
+        # Split by original split (train/val/test) using img_folder
+        for split_name in ["train", "val", "test"]:
+            split_df = df[df["img_folder"].str.contains(split_name)]
+            if split_df.empty:
+                continue
+            split_dir = output_dir / "kaggle" / split_name
+            split_dir.mkdir(parents=True, exist_ok=True)
+            images_list, labels_list, filenames_ok = [], [], []
+            for _, row in tqdm(split_df.iterrows(), total=len(split_df), desc=f"Kaggle {split_name}"):
+                img = preprocess_kaggle_image(row["full_path"])
+                if img is None:
+                    continue
+                images_list.append(img)
+                labels_list.append(row["word"])
+                filenames_ok.append(row["filename"])
+            if not images_list:
+                continue
+            images_arr = np.stack(images_list, axis=0)
+            np.save(split_dir / "images.npy", images_arr)
+            out_df = pd.DataFrame({"filename": filenames_ok, "word": labels_list})
+            out_df.to_csv(split_dir / "labels.csv", index=False)
+            log.info(f"  Kaggle {split_name}: {len(images_arr)} samples → {split_dir}")
+        # Save vocabulary
+        vocab_path = output_dir / "kaggle" / "vocab.json"
+        with open(vocab_path, "w") as f:
+            json.dump(vocab, f, indent=2)
+        log.info(f"Vocabulary saved → {vocab_path}")
+
+    save_kaggle_splits_merged(df_kaggle, output_dir, vocab)
     log.info("=== Data preparation complete ===")
 
 
