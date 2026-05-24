@@ -28,7 +28,7 @@ class EMNISTDataset:
     """
     
     def __init__(self, data_dir: str, vocab: dict, batch_size: int = 32,
-                 augment: bool = True, shuffle: bool = True):
+                 augment: bool = False, shuffle: bool = True):  # Changed True → False
         """
         Args:
             data_dir: path to split folder (train/val/test)
