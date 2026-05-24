@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 import h5py
+import cv2
 from pathlib import Path
 import logging
 from utils import augment_image, encode_label
@@ -28,7 +29,7 @@ class EMNISTDataset:
     """
     
     def __init__(self, data_dir: str, vocab: dict, batch_size: int = 32,
-                 augment: bool = False, shuffle: bool = True):  # Changed True → False
+                 augment: bool = False, shuffle: bool = True):
         """
         Args:
             data_dir: path to split folder (train/val/test)
@@ -65,14 +66,13 @@ class EMNISTDataset:
             batch_images = self.images[batch_idx]  # (B, 28, 28)
             batch_labels = self.labels[batch_idx]  # (B,)
             
-            # Augment
-            if self.augment:
-                batch_images = np.array([augment_image(img) for img in batch_images])
+            # No augmentation for EMNIST - keep shapes consistent
+            batch_images = batch_images.astype(np.float32)
             
             # Expand channel dimension: (B, 28, 28) -> (B, 28, 28, 1)
             batch_images = np.expand_dims(batch_images, axis=-1)
             
-            yield batch_images.astype(np.float32), batch_labels.astype(np.int32)
+            yield batch_images, batch_labels.astype(np.int32)
     
     def get_tf_dataset(self):
         """Return a tf.data.Dataset."""
@@ -93,7 +93,7 @@ class KaggleDataset:
     """
     
     def __init__(self, data_dir: str, vocab: dict, batch_size: int = 16,
-                 augment: bool = True, shuffle: bool = True,
+                 augment: bool = False, shuffle: bool = True,
                  target_img_height: int = 64, target_img_width: int = 256):
         """
         Args:
@@ -129,7 +129,6 @@ class KaggleDataset:
         new_h, new_w = int(h * scale), int(w * scale)
         
         # Resize
-        import cv2
         resized = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_AREA)
         
         # Pad to target
@@ -160,9 +159,6 @@ class KaggleDataset:
             for idx in batch_idx:
                 img = self.images[idx]
                 word = self.words[idx]
-                
-                if self.augment:
-                    img = augment_image(img)
                 
                 img = self._resize_image(img)
                 img = np.expand_dims(img, axis=-1)
