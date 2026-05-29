@@ -15,6 +15,7 @@ from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 import json
 import logging
+from concurrent.futures import ThreadPoolExecutor
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger(__name__)
@@ -119,7 +120,7 @@ def build_char_vocab(words: list) -> dict:
 
 def save_kaggle_splits_batched(df: pd.DataFrame, output_dir: Path, vocab: dict):
     """
-    Save Kaggle splits PROCESSING IN BATCHES to avoid memory errors.
+    Save Kaggle splits using memory-mapped files to avoid memory and disk space issues.
     """
     for split_name in ["train", "val", "test"]:
         split_df = df[df["split"] == split_name]
@@ -131,42 +132,60 @@ def save_kaggle_splits_batched(df: pd.DataFrame, output_dir: Path, vocab: dict):
         split_dir = output_dir / "kaggle" / split_name
         split_dir.mkdir(parents=True, exist_ok=True)
         
+        # Clean up any leftover temp batch files from previous crashes
+        for f in split_dir.glob("images_batch_*.npy"):
+            try:
+                f.unlink()
+            except Exception:
+                pass
+        
         batch_size = 5000
-        all_batch_files = []
         labels_list = []
         filenames_list = []
         
-        # Process in batches
-        for batch_idx in range(0, len(split_df), batch_size):
-            batch_df = split_df.iloc[batch_idx:batch_idx+batch_size]
-            batch_images = []
-            
-            for _, row in tqdm(batch_df.iterrows(), total=len(batch_df),
-                              desc=f"Kaggle {split_name} batch {batch_idx//batch_size + 1}"):
-                img = preprocess_kaggle_image(row["full_path"])
-                if img is not None:
-                    batch_images.append(img)
+        # Pre-allocate images.npy directly on disk as a memmap
+        final_shape = (len(split_df), KAGGLE_IMG_SIZE[0], KAGGLE_IMG_SIZE[1])
+        images_npy_path = split_dir / "images.npy"
+        
+        log.info(f"Allocating memory-mapped file for Kaggle {split_name}: {final_shape}")
+        images_arr = np.lib.format.open_memmap(
+            images_npy_path,
+            mode="w+",
+            dtype="float32",
+            shape=final_shape
+        )
+        
+        # Process and write directly to the memmap using a ThreadPoolExecutor
+        num_workers = os.cpu_count() or 4
+        log.info(f"Processing {split_name} with {num_workers} parallel threads")
+        with ThreadPoolExecutor(max_workers=num_workers) as executor:
+            for batch_idx in range(0, len(split_df), batch_size):
+                batch_df = split_df.iloc[batch_idx:batch_idx+batch_size]
+                
+                # Submit jobs to thread pool
+                futures = [
+                    executor.submit(preprocess_kaggle_image, row["full_path"])
+                    for _, row in batch_df.iterrows()
+                ]
+                
+                # Retrieve results in order and write them
+                for offset, (future, (_, row)) in enumerate(tqdm(zip(futures, batch_df.iterrows()), total=len(batch_df),
+                                                                 desc=f"Kaggle {split_name} batch {batch_idx//batch_size + 1}")):
+                    img = future.result()
+                    if img is None:
+                        img = np.ones(KAGGLE_IMG_SIZE, dtype=np.float32)
+                    
+                    images_arr[batch_idx + offset] = img
                     labels_list.append(row["word"])
                     filenames_list.append(row["filename"])
+                
+                # Flush changes to disk after each batch to free OS cache
+                images_arr.flush()
             
-            if batch_images:
-                images_arr = np.stack(batch_images, axis=0)
-                batch_file = split_dir / f"images_batch_{batch_idx//batch_size}.npy"
-                np.save(batch_file, images_arr)
-                all_batch_files.append(batch_file)
-                log.info(f"    Batch {batch_idx//batch_size}: {len(images_arr)} samples")
+        # Clean up the memmap file handle
+        del images_arr
         
-        # Merge all batches into one file
-        if all_batch_files:
-            all_images = [np.load(f) for f in all_batch_files]
-            final_images = np.concatenate(all_images, axis=0)
-            np.save(split_dir / "images.npy", final_images)
-            
-            # Delete temp batch files
-            for f in all_batch_files:
-                f.unlink()
-            
-            log.info(f"  Kaggle {split_name}: {len(final_images)} total samples")
+        log.info(f"  Kaggle {split_name}: {len(split_df)} total samples saved.")
         
         # Save labels
         out_df = pd.DataFrame({"filename": filenames_list, "word": labels_list})
@@ -253,11 +272,16 @@ def main():
     df_kaggle = pd.concat(all_dfs, ignore_index=True)
     log.info(f"Total Kaggle samples: {len(df_kaggle)}")
     
-    # Limit to 200k
+    # Limit to 200k while keeping the split proportions
     max_samples = 200000
     if len(df_kaggle) > max_samples:
-        log.info(f"Limiting to {max_samples} samples (from {len(df_kaggle)})")
-        df_kaggle = df_kaggle.head(max_samples)
+        log.info(f"Limiting to {max_samples} samples (from {len(df_kaggle)}) while maintaining split ratios")
+        ratio = max_samples / len(df_kaggle)
+        limited_dfs = []
+        for split_name, group in df_kaggle.groupby("split"):
+            split_limit = int(len(group) * ratio)
+            limited_dfs.append(group.head(split_limit))
+        df_kaggle = pd.concat(limited_dfs, ignore_index=True)
     
     vocab = build_char_vocab(df_kaggle["word"].tolist())
     save_kaggle_splits_batched(df_kaggle, output_dir, vocab)
