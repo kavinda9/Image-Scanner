@@ -1,10 +1,6 @@
 """
 Module for building OCR model, training it and performing predictions.
 """
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from datetime import datetime
 
 import numpy as np
@@ -17,6 +13,9 @@ from tensorflow.keras.losses import categorical_crossentropy
 from tensorflow.keras.activations import relu, softmax
 from tensorflow.keras.callbacks import CSVLogger, EarlyStopping, Callback
 
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import config_tf
 import consts
 from base_model import ModelNotLoadedError, ModelNotBuiltError, BaseTFModel
@@ -31,7 +30,7 @@ class OCRModel(BaseTFModel):
     BATCH_SIZE = 32
     LR = 3e-4
     MAX_EPOCHS = 35
-    MODEL_NAME = 'ocr_model.h5'
+    MODEL_NAME = 'emnist.h5'
     LOG_DIR = 'logs\\training-history'
 
     def __init__(self):

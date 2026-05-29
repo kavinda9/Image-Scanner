@@ -152,12 +152,5 @@ def get_letters_bounding_rects_as_words(img: np.ndarray) -> list[list[Rect]]:
     # obtain the enclosing rectangles
     rects = get_rects_not_seperated(img)
 
-    # ---------------- FOR DEBUGGING ---------------
-    img2 = cv2.cvtColor(img.copy(), cv2.COLOR_GRAY2RGB)
-    for i in rects:
-        img2 = cv2.rectangle(img2, (i.x, i.y), (i.x + i.w, i.y + i.h), (0, 255, 0), 2)
-    plt.imshow(img2)
-    plt.show()
-    # ----------------------------------------------
     words = divide_into_words(rects)
     return words

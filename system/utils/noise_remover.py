@@ -87,7 +87,7 @@ class DenoisingAutoencoder(BaseTFModel):
     LR = 1e-3
     EPOCHS = 2
     BATCH_SIZE = 128
-    MODEL_NAME = 'noise_remover.h5'
+    MODEL_NAME = 'kaggle.h5'
 
     def __init__(self):
         super().__init__()

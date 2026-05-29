@@ -1,11 +1,11 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'utils'))
+
 from flask import Flask, render_template, request, jsonify
 import cv2
-import os
 from werkzeug.utils import secure_filename
-import sys
-
-# Add utils to path
-sys.path.append('utils')
 
 from utils.preprocessing import preprocess_image
 from utils.ocr import text_from_image
