@@ -1,6 +1,10 @@
 """
 Module used to train the noise remover model,save it to HDF5 format, and later use it.
 """
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import glob
 
 import PIL

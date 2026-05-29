@@ -1,6 +1,10 @@
 """
 Module for building OCR model, training it and performing predictions.
 """
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from datetime import datetime
 
 import numpy as np
