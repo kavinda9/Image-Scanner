@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prescription OCR - Emnist + Kaggle</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>📋 Prescription Reader</h1>
+      <p>Upload a photo of handwritten prescription</p>
+
+      <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" id="imageInput" accept="image/*" required />
+        <button type="submit">Extract Text</button>
+      </form>
+
+      <div id="loading" class="loading" style="display: none">
+        Processing image...
+      </div>
+      <div id="result" class="result"></div>
+    </div>
+
+    <script>
+      const form = document.getElementById("uploadForm");
+      const resultDiv = document.getElementById("result");
+      const loadingDiv = document.getElementById("loading");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const fileInput = document.getElementById("imageInput");
+        if (!fileInput.files[0]) return;
+
+        const formData = new FormData();
+        formData.append("image", fileInput.files[0]);
+
+        loadingDiv.style.display = "block";
+        resultDiv.innerHTML = "";
+
+        try {
+          const response = await fetch("/predict", {
+            method: "POST",
+            body: formData,
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            resultDiv.innerHTML = `
+                        <h3>✅ Extracted Text:</h3>
+                        <pre>${data.text}</pre>
+                    `;
+          } else {
+            resultDiv.innerHTML = `<p style="color: red;">❌ Error: ${data.error}</p>`;
+          }
+        } catch (error) {
+          resultDiv.innerHTML = `<p style="color: red;">❌ Failed to connect to server</p>`;
+        } finally {
+          loadingDiv.style.display = "none";
+        }
+      });
+    </script>
+  </body>
+</html>
