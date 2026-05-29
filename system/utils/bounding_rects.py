@@ -136,21 +136,36 @@ def get_rects_not_seperated(img: np.ndarray) -> list[Rect]:
 
 def get_letters_bounding_rects_as_words(img: np.ndarray) -> list[list[Rect]]:
     """
-    Get the enclosing rects of the letters in the image, in a sorted order,
-    as a list of lists of rects.
-
-    Args:
-        img (np.ndarray): The source image.
-
-    Returns:
-       list[list[Rect]]: A list of words, where a word is a list of the
-         bounding rectangles of every character.
+    Improved version using contours - more robust for handwriting.
     """
-    img = img.copy()  # np arrays are mutable and are passed by reference
-    # blur the image
+    img = img.copy()
+    # Blur to reduce noise
     img = cv2.GaussianBlur(img, (3, 3), 0)
-    # obtain the enclosing rectangles
-    rects = get_rects_not_seperated(img)
-
-    words = divide_into_words(rects)
+    
+    # Find contours
+    contours, _ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    rects = []
+    for cnt in contours:
+        x, y, w, h = cv2.boundingRect(cnt)
+        if w * h > 150:  # Filter noise
+            rects.append(Rect(x, y, w, h))
+    
+    # Sort by position (left to right, top to bottom)
+    rects.sort(key=lambda r: (r.y, r.x))
+    
+    # Group into words (simple gap based)
+    words = []
+    current_word = []
+    
+    for i, rect in enumerate(rects):
+        current_word.append(rect)
+        if i == len(rects) - 1 or rects[i+1].x - (rect.x + rect.w) > 25:  # gap threshold
+            words.append(current_word)
+            current_word = []
+    
+    if current_word:
+        words.append(current_word)
+    
+    print(f"Detected {len(rects)} characters in {len(words)} words")
     return words
