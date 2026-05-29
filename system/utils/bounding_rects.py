@@ -142,14 +142,23 @@ def get_letters_bounding_rects_as_words(img: np.ndarray) -> list[list[Rect]]:
     # Blur to reduce noise
     img = cv2.GaussianBlur(img, (3, 3), 0)
     
+    # Invert image because cv2.findContours expects white text on black background
+    inverted = 255 - img
+    
     # Find contours
-    contours, _ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(inverted, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
     rects = []
     for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
         if w * h > 150:  # Filter noise
-            rects.append(Rect(x, y, w, h))
+            # Split heuristic for wide, merged characters (like double letters)
+            if w > 1.25 * h:
+                half_w = w // 2
+                rects.append(Rect(x, y, half_w, h))
+                rects.append(Rect(x + half_w, y, w - half_w, h))
+            else:
+                rects.append(Rect(x, y, w, h))
     
     # Sort by position (left to right, top to bottom)
     rects.sort(key=lambda r: (r.y, r.x))
