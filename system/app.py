@@ -52,9 +52,16 @@ def predict():
         # Extract text
         extracted_text = text_from_image(preprocessed)
         
+        # Encode preprocessed image to base64 for real-time frontend debugging
+        import base64
+        _, buffer = cv2.imencode('.png', preprocessed)
+        preprocessed_base64 = base64.b64encode(buffer).decode('utf-8')
+        preprocessed_src = f"data:image/png;base64,{preprocessed_base64}"
+        
         return jsonify({
             'success': True,
             'text': extracted_text,
+            'preprocessed_img': preprocessed_src,
             'message': 'Text extracted successfully'
         })
 

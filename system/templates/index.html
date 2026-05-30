@@ -3,53 +3,201 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Image to Text - OCR</title>
+    <title>VisionScan AI - Premium OCR Scanner</title>
+    <!-- Favicon / Meta Tags -->
+    <meta name="description" content="Extract, edit, and export text from any image instantly using high-precision AI OCR technology." />
+    <!-- Google Fonts -->
     <link rel="stylesheet" href="/static/style.css" />
   </head>
   <body>
-    <div class="container">
-      <div class="header">
-        <h1>📷 Image to Text</h1>
-        <p>Extract text from any image instantly using OCR</p>
-      </div>
+    <!-- Background glowing orbs -->
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
 
-      <div class="upload-area">
-        <form id="uploadForm" enctype="multipart/form-data">
-          <div class="drop-zone" id="dropZone">
-            <div class="upload-icon">📤</div>
-            <p>Drag & drop your image here</p>
-            <p class="or">— or —</p>
-            <label for="imageInput" class="browse-btn">Browse Image</label>
-            <input
-              type="file"
-              id="imageInput"
-              accept="image/*"
-              required
-              hidden
-            />
+    <div class="dashboard-container">
+      <!-- App Header -->
+      <header class="app-header">
+        <div class="brand">
+          <div class="logo-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+              <path d="M12 6v6l4 2"/>
+            </svg>
+          </div>
+          <div class="brand-text">
+            <h1>VisionScan <span>AI</span></h1>
+            <p>Intelligence-Driven Text Extraction</p>
+          </div>
+        </div>
+        <div class="pipeline-status">
+          <span class="pulse-dot"></span>
+          <span class="status-text">Engine: PaddleOCR v2.8</span>
+        </div>
+      </header>
+
+      <!-- Main Layout Grid -->
+      <main class="dashboard-grid">
+        <!-- Left Panel: Vision & Controls -->
+        <section class="panel vision-panel">
+          <div class="panel-header">
+            <h2><span class="step-num">01</span> Input Hub</h2>
+            <div class="tab-selectors" id="tabSelectors" style="display: none;">
+              <button class="tab-btn active" id="tabOriginal">Original</button>
+              <button class="tab-btn" id="tabPreprocessed">AI Vision</button>
+            </div>
           </div>
 
-          <button type="submit" id="extractBtn">Extract Text</button>
-        </form>
-      </div>
+          <div class="view-viewport" id="viewport">
+            <!-- Drop Zone (Initial State) -->
+            <div class="drop-zone" id="dropZone">
+              <div class="upload-icon-container">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+              </div>
+              <h3>Drag & Drop Image</h3>
+              <p>Supports PNG, JPG, JPEG, WEBP up to 16MB</p>
+              <span class="divider">or</span>
+              <label for="imageInput" class="browse-btn">Browse Computer</label>
+              <input type="file" id="imageInput" accept="image/*" required hidden />
+            </div>
 
-      <div id="loading" class="loading" style="display: none">
-        <div class="spinner"></div>
-        <p>Processing image with OCR...</p>
-      </div>
+            <!-- Preview Screens (Active State) -->
+            <div class="preview-container" id="previewContainer" style="display: none;">
+              <!-- Original Image View -->
+              <img id="originalPreview" src="" alt="Original upload preview" class="preview-img active" />
+              <!-- Preprocessed Image View -->
+              <img id="preprocessedPreview" src="" alt="Preprocessed AI view" class="preview-img" />
+              
+              <!-- Scanning Animation Bar -->
+              <div class="scanline" id="scanline" style="display: none;"></div>
+            </div>
+          </div>
 
-      <div id="result" class="result"></div>
+          <!-- Bottom Control Box -->
+          <div class="panel-footer" id="controlBox">
+            <button type="button" class="action-btn primary-btn" id="extractBtn" disabled>
+              <span class="btn-text">Extract Text</span>
+              <div class="btn-loader" style="display: none;">
+                <span class="spinner-small"></span> Processing...
+              </div>
+            </button>
+            <button type="button" class="action-btn secondary-btn" id="resetBtn" style="display: none;">
+              Reset Image
+            </button>
+          </div>
+        </section>
+
+        <!-- Right Panel: Output & Insights -->
+        <section class="panel results-panel">
+          <div class="panel-header">
+            <h2><span class="step-num">02</span> Extracted Insights</h2>
+            <div class="stats-badges" id="statsBadges" style="display: none;">
+              <span class="stat-badge"><strong id="charCount">0</strong> Chars</span>
+              <span class="stat-badge"><strong id="wordCount">0</strong> Words</span>
+            </div>
+          </div>
+
+          <!-- Output Box -->
+          <div class="output-viewport">
+            <!-- Empty State -->
+            <div class="empty-state" id="emptyState">
+              <div class="empty-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10 9 9 9 8 9"/>
+                </svg>
+              </div>
+              <h3>Waiting for Extraction</h3>
+              <p>Upload an image and run the OCR scanner to view and edit extracted text.</p>
+            </div>
+
+            <!-- Text Editor (Active State) -->
+            <div class="text-editor-container" id="editorContainer" style="display: none;">
+              <textarea id="resultTextarea" placeholder="Extracted text will appear here..." spellcheck="false"></textarea>
+            </div>
+          </div>
+
+          <!-- Action Toolbar -->
+          <div class="panel-footer result-actions" id="resultActions" style="display: none;">
+            <div class="actions-group">
+              <button class="tool-btn" id="copyBtn" title="Copy to Clipboard">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+                <span>Copy</span>
+              </button>
+
+              <button class="tool-btn" id="downloadBtn" title="Download Text File">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                <span>Download</span>
+              </button>
+
+              <button class="tool-btn" id="speakBtn" title="Listen / Speak Text">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                </svg>
+                <span>Listen</span>
+              </button>
+            </div>
+            
+            <button class="action-btn danger-btn" id="clearBtn">
+              Clear Output
+            </button>
+          </div>
+        </section>
+      </main>
     </div>
 
+    <!-- Frontend Interactive Logic -->
     <script>
-      const form = document.getElementById("uploadForm");
-      const resultDiv = document.getElementById("result");
-      const loadingDiv = document.getElementById("loading");
+      // DOM Elements
+      const imageInput = document.getElementById("imageInput");
       const dropZone = document.getElementById("dropZone");
-      const fileInput = document.getElementById("imageInput");
+      const previewContainer = document.getElementById("previewContainer");
+      const originalPreview = document.getElementById("originalPreview");
+      const preprocessedPreview = document.getElementById("preprocessedPreview");
+      const scanline = document.getElementById("scanline");
+      const extractBtn = document.getElementById("extractBtn");
+      const resetBtn = document.getElementById("resetBtn");
+      const btnText = extractBtn.querySelector(".btn-text");
+      const btnLoader = extractBtn.querySelector(".btn-loader");
+      
+      const tabSelectors = document.getElementById("tabSelectors");
+      const tabOriginal = document.getElementById("tabOriginal");
+      const tabPreprocessed = document.getElementById("tabPreprocessed");
 
-      // Drag & Drop
-      dropZone.addEventListener("click", () => fileInput.click());
+      const emptyState = document.getElementById("emptyState");
+      const editorContainer = document.getElementById("editorContainer");
+      const resultTextarea = document.getElementById("resultTextarea");
+      const statsBadges = document.getElementById("statsBadges");
+      const charCount = document.getElementById("charCount");
+      const wordCount = document.getElementById("wordCount");
+      const resultActions = document.getElementById("resultActions");
+
+      const copyBtn = document.getElementById("copyBtn");
+      const downloadBtn = document.getElementById("downloadBtn");
+      const speakBtn = document.getElementById("speakBtn");
+      const clearBtn = document.getElementById("clearBtn");
+
+      let currentFile = null;
+      let preprocessedImgSrc = "";
+      let speechUtterance = null;
+      let isSpeaking = false;
+
+      // --- Drag and Drop File Handlers ---
+      dropZone.addEventListener("click", () => imageInput.click());
 
       dropZone.addEventListener("dragover", (e) => {
         e.preventDefault();
@@ -64,21 +212,95 @@
         e.preventDefault();
         dropZone.classList.remove("dragover");
         if (e.dataTransfer.files.length) {
-          fileInput.files = e.dataTransfer.files;
-          form.dispatchEvent(new Event("submit"));
+          handleFile(e.dataTransfer.files[0]);
         }
       });
 
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
+      imageInput.addEventListener("change", (e) => {
+        if (e.target.files.length) {
+          handleFile(e.target.files[0]);
+        }
+      });
 
-        if (!fileInput.files[0]) return;
+      function handleFile(file) {
+        if (!file.type.startsWith("image/")) {
+          alert("Please upload a valid image file.");
+          return;
+        }
+        currentFile = file;
+
+        // Show original image preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          originalPreview.src = e.target.result;
+          dropZone.style.display = "none";
+          previewContainer.style.display = "flex";
+          extractBtn.disabled = false;
+          resetBtn.style.display = "inline-flex";
+          
+          // Switch to Original view and hide tabs until processed
+          showTab("original");
+          tabSelectors.style.display = "none";
+          preprocessedPreview.src = "";
+          preprocessedImgSrc = "";
+        };
+        reader.readAsDataURL(file);
+      }
+
+      // --- Tabs Control ---
+      tabOriginal.addEventListener("click", () => showTab("original"));
+      tabPreprocessed.addEventListener("click", () => showTab("preprocessed"));
+
+      function showTab(type) {
+        if (type === "original") {
+          tabOriginal.classList.add("active");
+          tabPreprocessed.classList.remove("active");
+          originalPreview.classList.add("active");
+          preprocessedPreview.classList.remove("active");
+        } else {
+          tabOriginal.classList.remove("active");
+          tabPreprocessed.classList.add("active");
+          originalPreview.classList.remove("active");
+          preprocessedPreview.classList.add("active");
+        }
+      }
+
+      // --- Reset & Clear Core State ---
+      resetBtn.addEventListener("click", () => {
+        currentFile = null;
+        imageInput.value = "";
+        originalPreview.src = "";
+        preprocessedPreview.src = "";
+        preprocessedImgSrc = "";
+        
+        dropZone.style.display = "flex";
+        previewContainer.style.display = "none";
+        tabSelectors.style.display = "none";
+        
+        extractBtn.disabled = true;
+        resetBtn.style.display = "none";
+        scanline.style.display = "none";
+        
+        stopSpeech();
+      });
+
+      // --- Perform Text Extraction ---
+      extractBtn.addEventListener("click", async () => {
+        if (!currentFile) return;
 
         const formData = new FormData();
-        formData.append("image", fileInput.files[0]);
+        formData.append("image", currentFile);
 
-        loadingDiv.style.display = "flex";
-        resultDiv.innerHTML = "";
+        // UI State: Loading & Scanning Active
+        extractBtn.disabled = true;
+        resetBtn.style.display = "none";
+        btnText.style.display = "none";
+        btnLoader.style.display = "flex";
+        scanline.style.display = "block";
+        
+        // Clear old results
+        updateResultState(null);
+        stopSpeech();
 
         try {
           const response = await fetch("/predict", {
@@ -89,29 +311,140 @@
           const data = await response.json();
 
           if (data.success) {
-            resultDiv.innerHTML = `
-              <h3>✅ Extracted Text</h3>
-              <pre>${data.text}</pre>
-              <button onclick="copyText()" class="copy-btn">📋 Copy Text</button>
-            `;
+            updateResultState(data.text);
+            
+            // Set up preprocessed view
+            if (data.preprocessed_img) {
+              preprocessedImgSrc = data.preprocessed_img;
+              preprocessedPreview.src = preprocessedImgSrc;
+              tabSelectors.style.display = "flex";
+              // Auto show AI Vision view to give high-end premium preview of pipeline
+              showTab("preprocessed");
+            }
           } else {
-            resultDiv.innerHTML = `<p class="error">❌ Error: ${data.error}</p>`;
+            alert(`Error: ${data.error}`);
+            updateResultState(null);
           }
         } catch (error) {
-          resultDiv.innerHTML = `<p class="error">❌ Failed to connect to server</p>`;
+          alert("Failed to connect to the OCR server.");
+          updateResultState(null);
         } finally {
-          loadingDiv.style.display = "none";
+          extractBtn.disabled = false;
+          resetBtn.style.display = "inline-flex";
+          btnText.style.display = "inline";
+          btnLoader.style.display = "none";
+          scanline.style.display = "none";
         }
       });
 
-      function copyText() {
-        const text = document.querySelector("pre").innerText;
-        navigator.clipboard.writeText(text).then(() => {
-          const btn = document.querySelector(".copy-btn");
-          btn.textContent = "✅ Copied!";
-          setTimeout(() => (btn.textContent = "📋 Copy Text"), 2000);
-        });
+      function updateResultState(text) {
+        if (text !== null) {
+          // Fill text & Show Output
+          resultTextarea.value = text;
+          emptyState.style.display = "none";
+          editorContainer.style.display = "block";
+          resultActions.style.display = "flex";
+          statsBadges.style.display = "flex";
+          updateTextStats();
+        } else {
+          // Reset Results UI
+          resultTextarea.value = "";
+          emptyState.style.display = "flex";
+          editorContainer.style.display = "none";
+          resultActions.style.display = "none";
+          statsBadges.style.display = "none";
+        }
       }
+
+      // --- Text Stats Counter ---
+      resultTextarea.addEventListener("input", updateTextStats);
+
+      function updateTextStats() {
+        const text = resultTextarea.value || "";
+        charCount.textContent = text.length;
+        
+        const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+        wordCount.textContent = words;
+      }
+
+      // --- Action Toolbar Functions ---
+
+      // 1. Copy to clipboard
+      copyBtn.addEventListener("click", () => {
+        const text = resultTextarea.value;
+        if (!text) return;
+
+        navigator.clipboard.writeText(text).then(() => {
+          const span = copyBtn.querySelector("span");
+          const originalText = span.textContent;
+          span.textContent = "Copied!";
+          copyBtn.style.color = "var(--accent)";
+          setTimeout(() => {
+            span.textContent = originalText;
+            copyBtn.style.color = "";
+          }, 2000);
+        });
+      });
+
+      // 2. Download as text file
+      downloadBtn.addEventListener("click", () => {
+        const text = resultTextarea.value;
+        if (!text) return;
+
+        const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        
+        // Create descriptive file name
+        const originalName = currentFile ? currentFile.name.substring(0, currentFile.name.lastIndexOf('.')) : 'extracted';
+        link.download = `${originalName}_extracted.txt`;
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      });
+
+      // 3. Text to Speech (Listen Mode)
+      speakBtn.addEventListener("click", () => {
+        if (isSpeaking) {
+          stopSpeech();
+        } else {
+          startSpeech();
+        }
+      });
+
+      function startSpeech() {
+        const text = resultTextarea.value;
+        if (!text) return;
+
+        // Configure speech
+        speechUtterance = new SpeechSynthesisUtterance(text);
+        speechUtterance.onend = () => stopSpeech();
+        speechUtterance.onerror = () => stopSpeech();
+
+        isSpeaking = true;
+        speakBtn.classList.add("active");
+        speakBtn.querySelector("span").textContent = "Stop";
+        speakBtn.style.color = "var(--danger)";
+        
+        window.speechSynthesis.speak(speechUtterance);
+      }
+
+      function stopSpeech() {
+        window.speechSynthesis.cancel();
+        isSpeaking = false;
+        speakBtn.classList.remove("active");
+        speakBtn.querySelector("span").textContent = "Listen";
+        speakBtn.style.color = "";
+      }
+
+      // 4. Clear Output
+      clearBtn.addEventListener("click", () => {
+        updateResultState(null);
+        stopSpeech();
+      });
     </script>
   </body>
 </html>
