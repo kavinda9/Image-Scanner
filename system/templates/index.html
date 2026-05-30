@@ -28,10 +28,7 @@
           <img src="/static/logo.png" alt="Vision AI Logo" />
         </div>
         
-        <div class="pipeline-status">
-          <span class="pulse-dot"></span>
-          <span class="status-text">Engine: PaddleOCR v2.8</span>
-        </div>
+
       </header>
 
       <!-- Main Layout Grid -->
@@ -133,22 +130,7 @@
                 <span>Copy</span>
               </button>
 
-              <button class="tool-btn" id="downloadBtn" title="Download Text File">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7 10 12 15 17 10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-                <span>Download</span>
-              </button>
 
-              <button class="tool-btn" id="speakBtn" title="Listen / Speak Text">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
-                </svg>
-                <span>Listen</span>
-              </button>
             </div>
             
             <button class="action-btn danger-btn" id="clearBtn">
@@ -186,14 +168,10 @@
       const resultActions = document.getElementById("resultActions");
 
       const copyBtn = document.getElementById("copyBtn");
-      const downloadBtn = document.getElementById("downloadBtn");
-      const speakBtn = document.getElementById("speakBtn");
       const clearBtn = document.getElementById("clearBtn");
 
       let currentFile = null;
       let preprocessedImgSrc = "";
-      let speechUtterance = null;
-      let isSpeaking = false;
 
       // --- Drag and Drop File Handlers ---
       dropZone.addEventListener("click", () => imageInput.click());
@@ -279,8 +257,6 @@
         extractBtn.disabled = true;
         resetBtn.style.display = "none";
         scanline.style.display = "none";
-        
-        stopSpeech();
       });
 
       // --- Perform Text Extraction ---
@@ -299,7 +275,6 @@
         
         // Clear old results
         updateResultState(null);
-        stopSpeech();
 
         try {
           const response = await fetch("/predict", {
@@ -385,64 +360,9 @@
         });
       });
 
-      // 2. Download as text file
-      downloadBtn.addEventListener("click", () => {
-        const text = resultTextarea.value;
-        if (!text) return;
-
-        const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        
-        // Create descriptive file name
-        const originalName = currentFile ? currentFile.name.substring(0, currentFile.name.lastIndexOf('.')) : 'extracted';
-        link.download = `${originalName}_extracted.txt`;
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      });
-
-      // 3. Text to Speech (Listen Mode)
-      speakBtn.addEventListener("click", () => {
-        if (isSpeaking) {
-          stopSpeech();
-        } else {
-          startSpeech();
-        }
-      });
-
-      function startSpeech() {
-        const text = resultTextarea.value;
-        if (!text) return;
-
-        // Configure speech
-        speechUtterance = new SpeechSynthesisUtterance(text);
-        speechUtterance.onend = () => stopSpeech();
-        speechUtterance.onerror = () => stopSpeech();
-
-        isSpeaking = true;
-        speakBtn.classList.add("active");
-        speakBtn.querySelector("span").textContent = "Stop";
-        speakBtn.style.color = "var(--danger)";
-        
-        window.speechSynthesis.speak(speechUtterance);
-      }
-
-      function stopSpeech() {
-        window.speechSynthesis.cancel();
-        isSpeaking = false;
-        speakBtn.classList.remove("active");
-        speakBtn.querySelector("span").textContent = "Listen";
-        speakBtn.style.color = "";
-      }
-
       // 4. Clear Output
       clearBtn.addEventListener("click", () => {
         updateResultState(null);
-        stopSpeech();
       });
     </script>
   </body>
