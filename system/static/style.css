@@ -106,35 +106,48 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 10px 5px;
+  padding: 20px 10px 10px;
+  position: relative;
+  min-height: 180px; /* Ensure space for the 400% sized logo */
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 15px;
+  text-align: left;
 }
 
 .logo-icon {
-  background: linear-gradient(135deg, var(--primary) 0%, #a78bfa 100%);
-  color: #fff;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-sm);
+  background: transparent;
+  border: none;
+  width: 176px; /* 44px * 4 = 176px (400% increase!) */
+  height: 176px;
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: 0 0 20px var(--primary-glow);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  overflow: hidden;
+  pointer-events: none; /* Let user clicks pass through the margins of the logo area */
+}
+
+.logo-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .brand-text h1 {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 800;
   letter-spacing: -0.5px;
   line-height: 1.1;
   background: linear-gradient(to right, #ffffff, #d1d5db);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  margin-bottom: 6px;
 }
 
 .brand-text h1 span {
@@ -704,13 +717,22 @@ body {
   
   .app-header {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     gap: 15px;
-    padding: 5px;
+    padding: 10px;
+    min-height: auto;
+  }
+  
+  .logo-icon {
+    position: static;
+    transform: none;
+    width: 140px;
+    height: 140px;
+    margin-bottom: 10px;
   }
   
   .pipeline-status {
-    align-self: flex-start;
+    align-self: center;
   }
   
   .panel {
