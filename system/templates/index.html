@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vision AI - Premium OCR Scanner</title>
     <!-- Favicon / Meta Tags -->
-    <meta name="description" content="Extract, edit, and export text from any image instantly using high-precision AI OCR technology." />
+    <meta
+      name="description"
+      content="Extract, edit, and export text from any image instantly using high-precision AI OCR technology."
+    />
     <!-- Google Fonts -->
     <link rel="stylesheet" href="/static/style.css" />
   </head>
@@ -20,15 +23,13 @@
         <div class="brand">
           <div class="brand-text">
             <h1>Vision <span>AI</span></h1>
-            <p>Intelligence-Driven Text Extraction</p>
+            <p>Intelligence Driven Text Extraction</p>
           </div>
         </div>
-        
+
         <div class="logo-icon">
           <img src="/static/logo.png" alt="Vision AI Logo" />
         </div>
-        
-
       </header>
 
       <!-- Main Layout Grid -->
@@ -37,7 +38,7 @@
         <section class="panel vision-panel">
           <div class="panel-header">
             <h2><span class="step-num">01</span> Input Hub</h2>
-            <div class="tab-selectors" id="tabSelectors" style="display: none;">
+            <div class="tab-selectors" id="tabSelectors" style="display: none">
               <button class="tab-btn active" id="tabOriginal">Original</button>
               <button class="tab-btn" id="tabPreprocessed">AI Vision</button>
             </div>
@@ -47,40 +48,80 @@
             <!-- Drop Zone (Initial State) -->
             <div class="drop-zone" id="dropZone">
               <div class="upload-icon-container">
-                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="17 8 12 3 7 8"/>
-                  <line x1="12" y1="3" x2="12" y2="15"/>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="40"
+                  height="40"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
                 </svg>
               </div>
               <h3>Drag & Drop Image</h3>
               <p>Supports PNG, JPG, JPEG, WEBP up to 16MB</p>
               <span class="divider">or</span>
-              <label for="imageInput" class="browse-btn">Browse Computer</label>
-              <input type="file" id="imageInput" accept="image/*" required hidden />
+              <span class="browse-btn">Browse Computer</span>
+              <input
+                type="file"
+                id="imageInput"
+                accept="image/*"
+                required
+                hidden
+              />
             </div>
 
             <!-- Preview Screens (Active State) -->
-            <div class="preview-container" id="previewContainer" style="display: none;">
+            <div
+              class="preview-container"
+              id="previewContainer"
+              style="display: none"
+            >
               <!-- Original Image View -->
-              <img id="originalPreview" src="" alt="Original upload preview" class="preview-img active" />
+              <img
+                id="originalPreview"
+                src=""
+                alt="Original upload preview"
+                class="preview-img active"
+              />
               <!-- Preprocessed Image View -->
-              <img id="preprocessedPreview" src="" alt="Preprocessed AI view" class="preview-img" />
-              
+              <img
+                id="preprocessedPreview"
+                src=""
+                alt="Preprocessed AI view"
+                class="preview-img"
+              />
+
               <!-- Scanning Animation Bar -->
-              <div class="scanline" id="scanline" style="display: none;"></div>
+              <div class="scanline" id="scanline" style="display: none"></div>
             </div>
           </div>
 
           <!-- Bottom Control Box -->
           <div class="panel-footer" id="controlBox">
-            <button type="button" class="action-btn primary-btn" id="extractBtn" disabled>
+            <button
+              type="button"
+              class="action-btn primary-btn"
+              id="extractBtn"
+              disabled
+            >
               <span class="btn-text">Extract Text</span>
-              <div class="btn-loader" style="display: none;">
+              <div class="btn-loader" style="display: none">
                 <span class="spinner-small"></span> Processing...
               </div>
             </button>
-            <button type="button" class="action-btn secondary-btn" id="resetBtn" style="display: none;">
+            <button
+              type="button"
+              class="action-btn secondary-btn"
+              id="resetBtn"
+              style="display: none"
+            >
               Reset Image
             </button>
           </div>
@@ -90,9 +131,13 @@
         <section class="panel results-panel">
           <div class="panel-header">
             <h2><span class="step-num">02</span> Extracted Insights</h2>
-            <div class="stats-badges" id="statsBadges" style="display: none;">
-              <span class="stat-badge"><strong id="charCount">0</strong> Chars</span>
-              <span class="stat-badge"><strong id="wordCount">0</strong> Words</span>
+            <div class="stats-badges" id="statsBadges" style="display: none">
+              <span class="stat-badge"
+                ><strong id="charCount">0</strong> Chars</span
+              >
+              <span class="stat-badge"
+                ><strong id="wordCount">0</strong> Words</span
+              >
             </div>
           </div>
 
@@ -101,38 +146,75 @@
             <!-- Empty State -->
             <div class="empty-state" id="emptyState">
               <div class="empty-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                  <line x1="16" y1="13" x2="8" y2="13"/>
-                  <line x1="16" y1="17" x2="8" y2="17"/>
-                  <polyline points="10 9 9 9 8 9"/>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="48"
+                  height="48"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                  />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                  <polyline points="10 9 9 9 8 9" />
                 </svg>
               </div>
               <h3>Waiting for Extraction</h3>
-              <p>Upload an image and run the OCR scanner to view and edit extracted text.</p>
+              <p>
+                Upload an image and run the OCR scanner to view and edit
+                extracted text.
+              </p>
             </div>
 
             <!-- Text Editor (Active State) -->
-            <div class="text-editor-container" id="editorContainer" style="display: none;">
-              <textarea id="resultTextarea" placeholder="Extracted text will appear here..." spellcheck="false"></textarea>
+            <div
+              class="text-editor-container"
+              id="editorContainer"
+              style="display: none"
+            >
+              <textarea
+                id="resultTextarea"
+                placeholder="Extracted text will appear here..."
+                spellcheck="false"
+              ></textarea>
             </div>
           </div>
 
           <!-- Action Toolbar -->
-          <div class="panel-footer result-actions" id="resultActions" style="display: none;">
+          <div
+            class="panel-footer result-actions"
+            id="resultActions"
+            style="display: none"
+          >
             <div class="actions-group">
               <button class="tool-btn" id="copyBtn" title="Copy to Clipboard">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path
+                    d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                  />
                 </svg>
                 <span>Copy</span>
               </button>
-
-
             </div>
-            
+
             <button class="action-btn danger-btn" id="clearBtn">
               Clear Output
             </button>
@@ -148,13 +230,15 @@
       const dropZone = document.getElementById("dropZone");
       const previewContainer = document.getElementById("previewContainer");
       const originalPreview = document.getElementById("originalPreview");
-      const preprocessedPreview = document.getElementById("preprocessedPreview");
+      const preprocessedPreview = document.getElementById(
+        "preprocessedPreview",
+      );
       const scanline = document.getElementById("scanline");
       const extractBtn = document.getElementById("extractBtn");
       const resetBtn = document.getElementById("resetBtn");
       const btnText = extractBtn.querySelector(".btn-text");
       const btnLoader = extractBtn.querySelector(".btn-loader");
-      
+
       const tabSelectors = document.getElementById("tabSelectors");
       const tabOriginal = document.getElementById("tabOriginal");
       const tabPreprocessed = document.getElementById("tabPreprocessed");
@@ -214,7 +298,7 @@
           previewContainer.style.display = "flex";
           extractBtn.disabled = false;
           resetBtn.style.display = "inline-flex";
-          
+
           // Switch to Original view and hide tabs until processed
           showTab("original");
           tabSelectors.style.display = "none";
@@ -249,11 +333,11 @@
         originalPreview.src = "";
         preprocessedPreview.src = "";
         preprocessedImgSrc = "";
-        
+
         dropZone.style.display = "flex";
         previewContainer.style.display = "none";
         tabSelectors.style.display = "none";
-        
+
         extractBtn.disabled = true;
         resetBtn.style.display = "none";
         scanline.style.display = "none";
@@ -272,7 +356,7 @@
         btnText.style.display = "none";
         btnLoader.style.display = "flex";
         scanline.style.display = "block";
-        
+
         // Clear old results
         updateResultState(null);
 
@@ -286,7 +370,7 @@
 
           if (data.success) {
             updateResultState(data.text);
-            
+
             // Set up preprocessed view
             if (data.preprocessed_img) {
               preprocessedImgSrc = data.preprocessed_img;
@@ -336,7 +420,7 @@
       function updateTextStats() {
         const text = resultTextarea.value || "";
         charCount.textContent = text.length;
-        
+
         const words = text.trim() ? text.trim().split(/\s+/).length : 0;
         wordCount.textContent = words;
       }
